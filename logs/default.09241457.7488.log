@@ -1,0 +1,3 @@
+2023-09-24 14:57:49,204 11144-MainThread   default    DEBUG  read configs  ['F:\\weixincloud\\fin_store\\config.ini', 'F:\\weixincloud\\config.ini', 'C:\\Users\\Administrator\\config.ini']
+2023-09-24 14:57:53,704 20152-Thread-2     default    DEBUG  create sql mysql+pymysql://root:yangjq123@localhost:3306/holding?charset=utf8&ssl_disabled=True 
+2023-09-24 14:57:53,856 20152-Thread-2     default    DEBUG  timing: 0:00:00.028001. run sql select * from ads_asset_concentrate where 类别1='城投债券'  finish. 
