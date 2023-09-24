@@ -1,13 +1,13 @@
-from flask import Flask, request
+from flask import Flask
 from flask_cors import CORS
-from flask_socketio import SocketIO
+# from flask_socketio import SocketIO
 from fin_store.sql_adapter import query_table
 
 SOURCE = 'ads_holding'
 
 app_holding = Flask(__name__)
 CORS(app_holding, resources={r"/*": {"origins": "*"}})
-socketio = SocketIO(app_holding, cors_allowed_origins="*")
+# socketio = SocketIO(app_holding, cors_allowed_origins="*")
 
 
 @app_holding.route('/asset_concentrate', methods=['GET', 'OPTIONS'])
