@@ -5,6 +5,7 @@ from flask_cors import CORS
 from fin_store.sql_adapter import query_table
 
 # SOURCE = 'holding'
+
 SOURCE = 'ads_holding'
 
 app_holding = Flask(__name__)
