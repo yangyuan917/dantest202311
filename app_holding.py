@@ -4,7 +4,8 @@ from flask_cors import CORS
 # from flask_socketio import SocketIO
 from fin_store.sql_adapter import query_table
 
-SOURCE = 'holding'
+# SOURCE = 'holding'
+SOURCE = 'ads_holding'
 
 app_holding = Flask(__name__)
 CORS(app_holding, resources={r"/*": {"origins": "*"}})
