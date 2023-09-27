@@ -4,7 +4,7 @@ from flask_cors import CORS
 # from flask_socketio import SocketIO
 from fin_store.sql_adapter import query_table
 
-SOURCE = 'ads_holding'
+SOURCE = 'holding'
 
 app_holding = Flask(__name__)
 CORS(app_holding, resources={r"/*": {"origins": "*"}})
@@ -181,6 +181,28 @@ def show_separate_fundprtindustry_timeseries():
     res = {sector: res[res.行业名称 == f'{sector}'].set_index('业务日期')['团队_pct'].to_dict() for sector in res.行业名称.unique()}
     return dict(code=200, data=res)
 
+
+# 3.1 交易
+@app_holding.route('/transaction_bondfund', methods=['GET', 'OPTIONS'])
+def show_ads_transaction_bondfund():
+    indicator = request.args.get('indicator')
+    catergory = request.args.get('catergory')
+    res = query_table(f"select 业务日期, 类别1, `市值(元)`, {indicator} from ads_transaction_bondfund "
+                      f"where 类别1='{catergory}' and 加减仓3='交易'", SOURCE).get_df()
+    res.业务日期 = res.业务日期.astype('str')
+    res = {col: res.set_index('业务日期')[col].to_dict() for col in ['市值(元)', f'{indicator}']}
+    return dict(code=200, data=res)
+
+
+@app_holding.route('/transaction_stock', methods=['GET', 'OPTIONS'])
+def show_ads_transaction_stock():
+    sector = request.args.get('sector')
+    res = query_table(f"select 业务日期, 加减仓2, 申万行业一级, `市值(元)` from ads_transaction_stock "
+                      f"where 申万行业一级 in ('总计', '{sector}')", SOURCE).get_df()
+    res.业务日期 = res.业务日期.astype('str')
+    res = {sector: {direction: res[(res.加减仓2 == direction) & (res.申万行业一级 == sector)].
+        set_index('业务日期')['市值(元)'].to_dict() for direction in ['加仓', '减仓']} for sector in ['总计', f'{sector}']}
+    return dict(code=200, data=res)
 
 
 if __name__ == '__main__':
