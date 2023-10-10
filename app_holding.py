@@ -297,9 +297,10 @@ def show_ads_transaction_bondfund():
 
 @app_holding.route('/transaction_stock', methods=['GET', 'OPTIONS'])
 def show_ads_transaction_stock():
-    sector = request.args.get('sector')
+    sector1 = request.args.get('sector1')
+    sector2 = request.args.get('sector2')
     res = query_table(f"select 业务日期, 加减仓2, 申万行业一级, `市值(元)` from ads_transaction_stock "
-                      f"where 申万行业一级 in ('总计', '{sector}')", SOURCE).get_df()
+                      f"where 申万行业一级 in ('{sector1}', '{sector2}')", SOURCE).get_df()
     res.业务日期 = res.业务日期.astype('str')
     res = res.pivot(index='业务日期', columns=['申万行业一级', '加减仓2'], values='市值(元)')
     res.columns = res.columns.map(lambda x: f'{x[0]}_{x[1]}')
