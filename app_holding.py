@@ -320,15 +320,19 @@ def show_ads_transaction_bondfund():
 def show_ads_transaction_stock():
     sector1 = request.args.get('sector1')
     sector2 = request.args.get('sector2')
+    sectors = [request.args.get('sector1'), request.args.get('sector2')]
     res = query_table(f"select 业务日期, 加减仓2, 申万行业一级, `市值(元)` from ads_transaction_stock "
                       f"where 申万行业一级 in ('{sector1}', '{sector2}')", SOURCE).get_df()
     res.业务日期 = res.业务日期.astype('str')
     res = res.pivot(index='业务日期', columns=['申万行业一级', '加减仓2'], values='市值(元)')
-    res.columns = res.columns.map(lambda x: f'{x[0]}_{x[1]}')
+    # new_level2_values = res.columns.map(lambda x: f'{x[0]}_{x[1]}')
+    # res.columns = pd.MultiIndex.from_arrays([res.columns.levels[0], new_level2_values])
+    # 创建一个新的元组列表，将原始的索引值进行连接
+    new_tuples = [(x[0], f"{x[0]}_{x[1]}") for x in res.columns]
+    # 创建一个新的MultiIndex
+    res.columns = pd.MultiIndex.from_tuples(new_tuples, names=['申万行业一级', '加减仓2'])
     res = res.fillna(0)
-    res = res.to_dict()
-    # res = {sector: {direction: res[(res.加减仓2 == direction) & (res.申万行业一级 == sector)].
-    #     set_index('业务日期')['市值(元)'].to_dict() for direction in ['加仓', '减仓']} for sector in ['总计', f'{sector}']}
+    res = {f'list{i}': res[sectors[i-1]].to_dict() for i in [1, 2] if sectors[i-1] in res}
     return dict(code=200, data=res)
 
 
