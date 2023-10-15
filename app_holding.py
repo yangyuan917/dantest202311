@@ -166,10 +166,7 @@ def show_fundprtindustry_timeseries():
                       f"where `归属资管计划/自主投资基金`='全部' and "
                       f"行业名称 in ('{sector}')", SOURCE).get_df()
     res.业务日期 = res.业务日期.astype('str')
-    res = res.pivot(index='行业名称', columns='业务日期', values='团队_pct')
-    res = res.fillna(0)
-    res = res.to_dict()
-    # res = {sector: res[res.行业名称 == f'{sector}'].set_index('业务日期')['团队_pct'].to_dict() for sector in res.行业名称.unique()}
+    res = {sector: res[res.行业名称 == f'{sector}'].set_index('业务日期')['团队_pct'].to_dict() for sector in res.行业名称.unique()}
     return dict(code=200, data=res)
 
 
