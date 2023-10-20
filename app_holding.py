@@ -71,13 +71,12 @@ def show_asset_concentrate():
 
 @app_holding.route('/asset_concentrate_timeseries', methods=['GET', 'OPTIONS'])
 def show_asset_concentrate_timeseries():
-    catergory = request.args.get('catergory')
-    catergory = "'" + catergory + "'"
+    catergory_string = request.args.get('catergory')
+    catergory_tuple = tuple(catergory_string.split(','))
     res = query_table(f"select 类别1, 业务日期, 团队_pct from ads_asset_concentrate where 团队='总计' and "
-                      f"类别1 in ({catergory})", SOURCE).get_df()
+                      f"类别1 in {catergory_tuple}", SOURCE).get_df()
     res.业务日期 = res.业务日期.astype('str')
     res = {catergory: res[res.类别1 == catergory].set_index('业务日期')['团队_pct'].to_dict() for catergory in res.类别1.unique()}
-    # res = res.fillna(0)
     return dict(code=200, data=res)
 
 
@@ -167,6 +166,63 @@ def show_fundprtindustry_timeseries():
                       f"行业名称 in ('{sector}')", SOURCE).get_df()
     res.业务日期 = res.业务日期.astype('str')
     res = {sector: res[res.行业名称 == f'{sector}'].set_index('业务日期')['团队_pct'].to_dict() for sector in res.行业名称.unique()}
+    return dict(code=200, data=res)
+
+
+# new_added
+@app_holding.route('/asset_citybond', methods=['GET', 'OPTIONS'])
+def show_asset_citybond():
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+    res = query_table(f"select 业务日期, province, 团队_pct from ads_asset_citybond "
+                      f"where `归属资管计划/自主投资基金`='总计' and "
+                      f"业务日期 in ('{start_date}', '{end_date}')", SOURCE).get_df()
+    res.业务日期 = res.业务日期.astype('str')
+    res = res.pivot(index='province', columns='业务日期', values='团队_pct')
+    res = res.fillna(0)
+    return dict(code=200, data=[{'name': col, 'data': res[col].to_list(), 'xaxis': res.index.to_list()} for col in res.columns])
+
+
+# new_added
+@app_holding.route('/asset_citybond1', methods=['GET', 'OPTIONS'])
+def show_asset_citybond1():
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+    res = query_table(f"select 业务日期, province, 团队_pct from ads_asset_citybond "
+                      f"where `归属资管计划/自主投资基金`='总计' and "
+                      f"业务日期 in ('{start_date}', '{end_date}')", SOURCE).get_df()
+    res.业务日期 = res.业务日期.astype('str')
+    res = res.pivot(index='province', columns='业务日期', values='团队_pct')
+    res = res.fillna(0)
+    return dict(code=200, data={'xaxis': res.index.to_list(),
+                                'series': [{'name': col, 'data': res[col].to_list()} for col in res.columns]})
+
+
+# new_added
+@app_holding.route('/asset_citybond_timeseries', methods=['GET', 'OPTIONS'])
+def show_asset_citybond_timeseries():
+    dt = request.args.get('dt')
+    dt_tuple = tuple(dt.split(','))
+    res = query_table(f"select 业务日期, province, 团队_pct from ads_asset_citybond "
+                      f"where `归属资管计划/自主投资基金`='总计' and "
+                      f"province in {dt_tuple}", SOURCE).get_df()
+    res.业务日期 = res.业务日期.astype('str')
+    res = [{'name': dt, 'data': res[res.province == dt]['团队_pct'].to_list(),
+            'xaxis': res[res.province == dt].业务日期.to_list()} for dt in res.province.unique()]
+    return dict(code=200, data=res)
+
+
+# new_added
+@app_holding.route('/asset_citybond_timeseries2', methods=['GET', 'OPTIONS'])
+def show_asset_citybond_timeseries2():
+    dt = request.args.get('dt')
+    dt_tuple = tuple(dt.split(','))
+    res = query_table(f"select 业务日期, province, 团队_pct from ads_asset_citybond "
+                      f"where `归属资管计划/自主投资基金`='总计' and "
+                      f"province in {dt_tuple}", SOURCE).get_df()
+    res.业务日期 = res.业务日期.astype('str')
+    res = [{'name': dt, 'data': res[res.province == dt]['团队_pct'].to_list(),
+            'xaxis': res[res.province == dt].业务日期.to_list()} for dt in res.province.unique()]
     return dict(code=200, data=res)
 
 
