@@ -4,20 +4,20 @@ from flask_cors import CORS
 # from flask_socketio import SocketIO
 from fin_store.sql_adapter import query_table
 
-# SOURCE = 'holding'
+SOURCE = 'holding'
 
-SOURCE = 'ads_holding'
+# SOURCE = 'ads_holding'
 
 app_holding = Flask(__name__)
 CORS(app_holding, resources={r"/*": {"origins": "*"}})
 # socketio = SocketIO(app_holding, cors_allowed_origins="*")
 
 catergory_list = ['城投债券', '同业存单', '金融债', '利率债', '非标', '同业借款', '债券型基金', '混合型基金', '股票型基金',
-           '股票', '城投abs', 'REITs', '货币市场型基金', '货币市场工具', '存款', '现金']
+                  '股票', '城投abs', 'REITs', '货币市场型基金', '货币市场工具', '存款', '现金']
 industry_list = ['农林牧渔', '基础化工', '钢铁', '有色金属', '电子', '家用电器', '食品饮料', '纺织服饰', '轻工制造', '医药生物',
-           '公用事业', '交通运输', '房地产', '商贸零售', '社会服务', '综合', '建筑材料', '建筑装饰',
-           '电力设备', '国防军工', '计算机', '传媒', '通信', '银行', '非银金融', '汽车', '机械设备',
-           '煤炭', '石油石化', '环保', '美容护理']
+                 '公用事业', '交通运输', '房地产', '商贸零售', '社会服务', '综合', '建筑材料', '建筑装饰',
+                 '电力设备', '国防军工', '计算机', '传媒', '通信', '银行', '非银金融', '汽车', '机械设备',
+                 '煤炭', '石油石化', '环保', '美容护理']
 index_list = ['上证50指数', '沪深300指数', '中证800指数', '中证1000指数', 'not_in_index']
 
 
@@ -89,7 +89,8 @@ def show_asset_indicator():
     res = query_table(f"select 类别1, 业务日期, {indicator} from ads_asset_concentrate "
                       f"where 团队='总计' and 类别1 in ({catergory})", SOURCE).get_df()
     res.业务日期 = res.业务日期.astype('str')
-    res = {catergory: res[res.类别1 == catergory].set_index('业务日期')[f'{indicator}'].to_dict() for catergory in res.类别1.unique()}
+    res = {catergory: res[res.类别1 == catergory].set_index('业务日期')[f'{indicator}'].to_dict() for catergory in
+           res.类别1.unique()}
     # res = res.fillna(0)
     return dict(code=200, data=res)
 
@@ -136,7 +137,8 @@ def show_prtindustry_timeseries():
                       f"target_col in ('{sector}')", SOURCE).get_df()
     # res = res.fillna(0)
     res.业务日期 = res.业务日期.astype('str')
-    res = {sector: res[res.target_col == f'{sector}'].set_index('业务日期')['团队占比'].to_dict() for sector in res.target_col.unique()}
+    res = {sector: res[res.target_col == f'{sector}'].set_index('业务日期')['团队占比'].to_dict() for sector in
+           res.target_col.unique()}
     return dict(code=200, data=res)
 
 
@@ -180,7 +182,8 @@ def show_asset_citybond():
     res.业务日期 = res.业务日期.astype('str')
     res = res.pivot(index='province', columns='业务日期', values='团队_pct')
     res = res.fillna(0)
-    return dict(code=200, data=[{'name': col, 'data': res[col].to_list(), 'xaxis': res.index.to_list()} for col in res.columns])
+    return dict(code=200,
+                data=[{'name': col, 'data': res[col].to_list(), 'xaxis': res.index.to_list()} for col in res.columns])
 
 
 # new_added
@@ -271,7 +274,8 @@ def show_asset_indicator_separate():
                       f"where `归属资管计划/自主投资基金`='{separate_name}' and "
                       f"类别1 in ({catergory})", SOURCE).get_df()
     res.业务日期 = res.业务日期.astype('str')
-    res = {catergory: res[res.类别1 == catergory].set_index('业务日期')[f'{indicator}'].to_dict() for catergory in res.类别1.unique()}
+    res = {catergory: res[res.类别1 == catergory].set_index('业务日期')[f'{indicator}'].to_dict() for catergory in
+           res.类别1.unique()}
     # res = res.fillna(0)
     return dict(code=200, data=res)
 
@@ -322,7 +326,8 @@ def show_separate_prtindustry_timeseries():
                       f"target_col in ('{sector}')", SOURCE).get_df()
     # res = res.fillna(0)
     res.业务日期 = res.业务日期.astype('str')
-    res = {sector: res[res.target_col == f'{sector}'].set_index('业务日期')['团队占比'].to_dict() for sector in res.target_col.unique()}
+    res = {sector: res[res.target_col == f'{sector}'].set_index('业务日期')['团队占比'].to_dict() for sector in
+           res.target_col.unique()}
     return dict(code=200, data=res)
 
 
@@ -385,20 +390,22 @@ def show_ads_transaction_stock():
     # 创建一个新的MultiIndex
     res.columns = pd.MultiIndex.from_tuples(new_tuples, names=['申万行业一级', '加减仓2'])
     res = res.fillna(0)
-    res = {f'list{i}': res[sectors[i-1]].to_dict() for i in [1, 2] if sectors[i-1] in res}
+    res = {f'list{i}': res[sectors[i - 1]].to_dict() for i in [1, 2] if sectors[i - 1] in res}
     return dict(code=200, data=res)
 
 
 @app_holding.route('/curve_cnbd', methods=['GET', 'OPTIONS'])
 def show_ads_curve_cnbd():
     res = query_table(f"select * from ads_curve_cnbd ", SOURCE).get_df()
-    return dict(code=200, data=res.set_index('term')['value'].to_dict())
+    return dict(code=200, data={'xaixs': res.term.to_list(), 'series': {'name': '收益率曲线', 'data': res.value.to_list()}})
 
 
 @app_holding.route('/fixincome_price', methods=['GET', 'OPTIONS'])
 def show_ads_fixincome_price():
-    res = query_table(f"select * from ads_fixincome_price ", SOURCE).get_df()
-    return dict(code=200, data=res.set_index('symbol2').to_dict())
+    res = query_table(f"select * from ads_fixincome_price where term >= 30 limit 100", SOURCE).get_df()
+    return dict(code=200, data=[{'name': type_, 'data': res[res.类别1 == type_][['term', 'yield']].values.tolist(),
+                                 'code': res[res.类别1 == type_]['symbol2'].to_list(),
+                                 'bond_name': res[res.类别1 == type_]['名称'].to_list()} for type_ in res.类别1])
 
 
 if __name__ == '__main__':
