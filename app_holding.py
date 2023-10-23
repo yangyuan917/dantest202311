@@ -3,12 +3,15 @@ from flask import Flask, request
 from flask_cors import CORS
 # from flask_socketio import SocketIO
 from fin_store.sql_adapter import query_table
+from app_bond_price import app_bond_price
 
 # SOURCE = 'holding'
 
 SOURCE = 'ads_holding'
 
 app_holding = Flask(__name__)
+app_holding.register_blueprint(app_bond_price, url_prefix='/bp')
+
 CORS(app_holding, resources={r"/*": {"origins": "*"}})
 # socketio = SocketIO(app_holding, cors_allowed_origins="*")
 
@@ -392,20 +395,6 @@ def show_ads_transaction_stock():
     res = res.fillna(0)
     res = {f'list{i}': res[sectors[i - 1]].to_dict() for i in [1, 2] if sectors[i - 1] in res}
     return dict(code=200, data=res)
-
-
-@app_holding.route('/curve_cnbd', methods=['GET', 'OPTIONS'])
-def show_ads_curve_cnbd():
-    res = query_table(f"select * from ads_curve_cnbd ", SOURCE).get_df()
-    return dict(code=200, data={'xaixs': res.term.to_list(), 'series': {'name': '收益率曲线', 'data': res.value.to_list()}})
-
-
-@app_holding.route('/fixincome_price', methods=['GET', 'OPTIONS'])
-def show_ads_fixincome_price():
-    res = query_table(f"select * from ads_fixincome_price where term >= 0.3 limit 100", SOURCE).get_df()
-    return dict(code=200, data=[{'name': type_, 'data': res[res.类别1 == type_][['term', 'yield']].values.tolist(),
-                                 'code': res[res.类别1 == type_]['symbol2'].to_list(),
-                                 'bond_name': res[res.类别1 == type_]['名称'].to_list()} for type_ in res.类别1])
 
 
 if __name__ == '__main__':
