@@ -4,13 +4,15 @@ from flask_cors import CORS
 # from flask_socketio import SocketIO
 from fin_store.sql_adapter import query_table
 from app_bond_price import app_bond_price
-
-# SOURCE = 'holding'
+from app_real_estate import app_real_estate
+from app_txn import app_txn
 
 SOURCE = 'ads_holding'
 
 app_holding = Flask(__name__)
 app_holding.register_blueprint(app_bond_price, url_prefix='/bp')
+app_holding.register_blueprint(app_real_estate, url_prefix='/estate')
+app_holding.register_blueprint(app_txn, url_prefix='/txn')
 
 CORS(app_holding, resources={r"/*": {"origins": "*"}})
 # socketio = SocketIO(app_holding, cors_allowed_origins="*")
