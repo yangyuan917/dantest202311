@@ -1,7 +1,7 @@
 from flask import Blueprint
 from fin_store.sql_adapter import query_table
 
-SOURCE = 'holding'
+SOURCE = 'ads_holding'
 
 app_bond_price = Blueprint('bp', __name__)
 

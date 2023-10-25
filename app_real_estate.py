@@ -3,7 +3,7 @@ from fin_store.sql_adapter import query_table
 from flask import request
 import pandas as pd
 
-SOURCE = 'real_estate'
+SOURCE = 'ads_real_estate'
 app_real_estate = Blueprint('estate', __name__)
 
 
