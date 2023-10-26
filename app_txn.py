@@ -8,7 +8,7 @@ app_txn = Blueprint('txn', __name__)
 
 
 @app_txn.route('/atp', methods=['GET', 'OPTIONS'])
-def show_ads_curve_cnbd():
+def show_ads_txn_atp():
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
     sep_name = request.args.get('sep_name', default='')
@@ -21,33 +21,60 @@ def show_ads_curve_cnbd():
         tb_name = 'tmp_separate_tag'
 
     sql_query = f"SELECT * FROM {tb_name}  WHERE 业务日期 >= '{start_date}' AND 业务日期 <= '{end_date}'"
+    sql_query += f" AND inside_trading_tag = {inter_trade}"  # todo : inside_trading
 
     if sep_name:
         sql_query += f" AND `归属资管计划/自主投资基金` = '{sep_name}'"
     if cat:
         sql_query += f" AND 类别1 = '{cat}'"
-    if inter_trade:
-        sql_query += f" AND inside_trading_tag = {inter_trade}"  # todo : inside_trading
+
     df = query_table(sql_query, SOURCE).get_df()
     if sep_name:
-        res = df.groupby(['类别1']).agg({'symbol2': 'count', '市值(元)': 'sum'}).reset_index()
-        res.index.name = 'index'
+        col = '类别1'
     if cat:
-        res = df.groupby(['归属资管计划/自主投资基金']).agg({'symbol2': 'count', '市值(元)': 'sum'})
-        res.index.name = 'index'
+        col = '归属资管计划/自主投资基金'
     if not sep_name and not cat:
-        df1 = df.groupby(['类别1']).agg({'symbol2': 'count', '市值(元)': 'sum'})
-        # df1 = df.pivot_table(index='类别1', columns='加减仓', aggfunc={'symbol2': 'count', '市值(元)': 'sum'})
-        df2 = df.groupby(['归属资管计划/自主投资基金']).agg({'symbol2': 'count', '市值(元)': 'sum'})
-        #
-        # total = df.groupby('加减仓').agg({'symbol2': 'count', '市值(元)': 'sum'}).reset_index()
-        # total['加减仓'] = '总计'
-        # df_with_total = pd.concat([df, total])
-        # result = df_with_total.pivot_table(index='类别1', columns='加减仓', values=['symbol2', '市值(元)'],
-        #                                    aggfunc={'symbol2': 'count', '市值(元)': 'sum'}, fill_value=0)
-        res = pd.concat([df1, df2])
-    return dict(code=200, data=res.reset_index().to_dict(orient='records'))
+        col = '类别1'
+
+    df1 = df.groupby([col]).agg({'symbol2': 'count', '市值(元)': 'sum'})
+    df1_ = df.pivot_table(index=col, columns='加减仓2', aggfunc={'symbol2': 'count', '市值(元)': 'sum'})
+    df1_ = df1_.swaplevel(0, 1, axis=1).sort_index(axis=1)
+    for col in ['加仓', '减仓', '到期']:
+        if col not in df1_.columns.get_level_values(0):
+            df1_[col, 'symbol2'] = 0
+            df1_[col, '市值(元)'] = 0.0
+    res = pd.concat([df1, df1_['加仓'], df1_['减仓'], df1_['到期']], axis=1)
+    cols = ['symbol2', '市值(元)']
+    res.columns = cols + ['加仓_' + col for col in cols] + ['减仓_' + col for col in cols] + ['到期_' + col for col in
+                                                                                          cols]
+    # res = pd.concat([pd.concat([df1, df2]), pd.concat([df1_, df2_])], axis=1)
+    return dict(code=200, data=res.fillna(0.0).reset_index().to_dict(orient='records'))
     # jsonify(res.to_dict(orient="records"))
+
+
+@app_txn.route('/atp2', methods=['GET', 'OPTIONS'])
+def show_ads_txn_atp2():
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+    inter_trade = request.args.get('inter_trade', default=0)
+    tb_name = 'tmp_separate_tag'
+    sql_query = f"SELECT * FROM {tb_name}  WHERE 业务日期 >= '{start_date}' AND 业务日期 <= '{end_date}'"
+    sql_query += f" AND inside_trading_tag = {inter_trade}"  # todo : inside_trading
+    df = query_table(sql_query, SOURCE).get_df()
+    df2 = df.groupby(['归属资管计划/自主投资基金']).agg({'symbol2': 'count', '市值(元)': 'sum'})
+    df2_ = df.pivot_table(index='归属资管计划/自主投资基金', columns='加减仓2', aggfunc={'symbol2': 'count', '市值(元)': 'sum'})
+    df2_ = df2_.swaplevel(0, 1, axis=1).sort_index(axis=1)
+    # print(df2_.columns.get_level_values(0))
+    # print(df2_)
+    for col in ['加仓', '减仓', '到期']:
+        if col not in df2_.columns.get_level_values(0):
+            df2_[col, 'symbol2'] = 0
+            df2_[col, '市值(元)'] = 0.0
+    res = pd.concat([df2, df2_['加仓'], df2_['减仓'], df2_['到期']], axis=1)
+    cols = ['symbol2', '市值(元)']
+    res.columns = cols + ['加仓_' + col for col in cols] + ['减仓_' + col for col in cols] + ['到期_' + col for col in cols]
+    # print(res.fillna(0.0).reset_index().iloc[0,:])
+    return dict(code=200, data=res.fillna(0.0).reset_index().to_dict(orient='records'))
 
 
 # @app_txn.route('/sale', methods=['GET', 'OPTIONS'])
