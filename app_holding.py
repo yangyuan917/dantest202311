@@ -5,6 +5,7 @@ from flask_cors import CORS
 from fin_store.sql_adapter import query_table
 from app_bond_price import app_bond_price
 from app_real_estate import app_real_estate
+from app_list import app_list
 from app_txn import app_txn
 
 SOURCE = 'ads_holding'
@@ -13,45 +14,10 @@ app_holding = Flask(__name__)
 app_holding.register_blueprint(app_bond_price, url_prefix='/bp')
 app_holding.register_blueprint(app_real_estate, url_prefix='/estate')
 app_holding.register_blueprint(app_txn, url_prefix='/txn')
+app_holding.register_blueprint(app_list, url_prefix='/list')
 
 CORS(app_holding, resources={r"/*": {"origins": "*"}})
 # socketio = SocketIO(app_holding, cors_allowed_origins="*")
-
-catergory_list = ['城投债券', '同业存单', '金融债', '利率债', '非标', '同业借款', '债券型基金', '混合型基金', '股票型基金',
-                  '股票', '城投abs', 'REITs', '货币市场型基金', '货币市场工具', '存款', '现金']
-industry_list = ['农林牧渔', '基础化工', '钢铁', '有色金属', '电子', '家用电器', '食品饮料', '纺织服饰', '轻工制造', '医药生物',
-                 '公用事业', '交通运输', '房地产', '商贸零售', '社会服务', '综合', '建筑材料', '建筑装饰',
-                 '电力设备', '国防军工', '计算机', '传媒', '通信', '银行', '非银金融', '汽车', '机械设备',
-                 '煤炭', '石油石化', '环保', '美容护理']
-index_list = ['上证50指数', '沪深300指数', '中证800指数', '中证1000指数', 'not_in_index']
-
-
-@app_holding.route('/separate_list', methods=['GET', 'OPTIONS'])
-def show_separate_list():
-    res = query_table("select distinct `归属资管计划/自主投资基金` from ads_asset_concentrate_separate", SOURCE).get_df()
-    return dict(code=200, data=res['归属资管计划/自主投资基金'].to_list())
-
-
-@app_holding.route('/catergory_list', methods=['GET', 'OPTIONS'])
-def show_catergory_list():
-    res = ['城投债券', '同业存单', '金融债', '利率债', '非标', '同业借款', '债券型基金', '混合型基金', '股票型基金',
-           '股票', '城投abs', 'REITs', '货币市场型基金', '货币市场工具', '存款', '现金']
-    return dict(code=200, data=res)
-
-
-@app_holding.route('/industry_list', methods=['GET', 'OPTIONS'])
-def show_industry_list():
-    res = ['农林牧渔', '基础化工', '钢铁', '有色金属', '电子', '家用电器', '食品饮料', '纺织服饰', '轻工制造', '医药生物',
-           '公用事业', '交通运输', '房地产', '商贸零售', '社会服务', '综合', '建筑材料', '建筑装饰',
-           '电力设备', '国防军工', '计算机', '传媒', '通信', '银行', '非银金融', '汽车', '机械设备',
-           '煤炭', '石油石化', '环保', '美容护理']
-    return dict(code=200, data=res)
-
-
-@app_holding.route('/index_list', methods=['GET', 'OPTIONS'])
-def show_index_list():
-    res = ['上证50指数', '沪深300指数', '中证800指数', '中证1000指数', 'not_in_index']
-    return dict(code=200, data=res)
 
 
 # 1.全公司总计 ads_asset_concentrate
