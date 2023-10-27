@@ -1,8 +1,7 @@
 from flask import Blueprint
 from fin_store.sql_adapter import query_table
+from database import HOLDING, REAL_ESTATE
 
-HOLDING = 'ads_holding'
-REAL_ESTATE = 'ads_real_estate'
 app_list = Blueprint('list', __name__)
 
 catergory_list = ['城投债券', '同业存单', '金融债', '利率债', '非标', '同业借款', '债券型基金', '混合型基金', '股票型基金',

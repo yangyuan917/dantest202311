@@ -2,8 +2,8 @@ from flask import Blueprint
 from fin_store.sql_adapter import query_table
 from flask import request
 import pandas as pd
+from database import HOLDING
 
-SOURCE = 'ads_holding'
 app_txn = Blueprint('txn', __name__)
 
 
@@ -28,7 +28,7 @@ def show_ads_txn_atp():
     if cat:
         sql_query += f" AND 类别1 = '{cat}'"
 
-    df = query_table(sql_query, SOURCE).get_df()
+    df = query_table(sql_query, HOLDING).get_df()
     if sep_name:
         col = '类别1'
     if cat:
@@ -60,7 +60,7 @@ def show_ads_txn_atp2():
     tb_name = 'tmp_separate_tag'
     sql_query = f"SELECT * FROM {tb_name}  WHERE 业务日期 >= '{start_date}' AND 业务日期 <= '{end_date}'"
     sql_query += f" AND inside_trading_tag = {inter_trade}"  # todo : inside_trading
-    df = query_table(sql_query, SOURCE).get_df()
+    df = query_table(sql_query, HOLDING).get_df()
     df2 = df.groupby(['归属资管计划/自主投资基金']).agg({'symbol2': 'count', '市值(元)': 'sum'})
     df2_ = df.pivot_table(index='归属资管计划/自主投资基金', columns='加减仓2', aggfunc={'symbol2': 'count', '市值(元)': 'sum'})
     df2_ = df2_.swaplevel(0, 1, axis=1).sort_index(axis=1)
