@@ -45,7 +45,7 @@ def show_ads_estate_listp_chg():
     res = res.pivot(index='业务日期', columns=['板块2', 'tag'], values='tag_pct')
     res = res.fillna(0.0)
     return dict(code=200, data={'xaixs': res.index.to_list(),
-                                'series': [{'name': category + '_' + tag, 'data': res[category][tag].to_list()}
+                                'series': [{'name': category, 'tag': tag, 'data': res[category][tag].to_list()}
                                            for tag in res.columns.levels[1]
                                            for category in res.columns.levels[0]]})
 

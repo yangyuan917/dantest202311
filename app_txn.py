@@ -45,8 +45,8 @@ def show_ads_txn_atp():
             df1_[col, '市值(元)'] = 0.0
     res = pd.concat([df1, df1_['加仓'], df1_['减仓'], df1_['到期']], axis=1)
     cols = ['symbol2', '市值(元)']
-    res.columns = cols + ['加仓_' + col for col in cols] + ['减仓_' + col for col in cols] + ['到期_' + col for col in
-                                                                                          cols]
+    res.columns = cols + ['加仓_' + col for col in cols] + ['减仓_' + col for col in cols] + ['到期_' + col for col in cols]
+    res.index.name = '归属资管计划'
     # res = pd.concat([pd.concat([df1, df2]), pd.concat([df1_, df2_])], axis=1)
     return dict(code=200, data=res.fillna(0.0).reset_index().to_dict(orient='records'))
     # jsonify(res.to_dict(orient="records"))
@@ -73,9 +73,9 @@ def show_ads_txn_atp2():
     res = pd.concat([df2, df2_['加仓'], df2_['减仓'], df2_['到期']], axis=1)
     cols = ['symbol2', '市值(元)']
     res.columns = cols + ['加仓_' + col for col in cols] + ['减仓_' + col for col in cols] + ['到期_' + col for col in cols]
+    res.index.name = '归属资管计划'
     # print(res.fillna(0.0).reset_index().iloc[0,:])
     return dict(code=200, data=res.fillna(0.0).reset_index().to_dict(orient='records'))
-
 
 # @app_txn.route('/sale', methods=['GET', 'OPTIONS'])
 # def show_ads_curve_cnbd():
