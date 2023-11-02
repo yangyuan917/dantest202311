@@ -36,8 +36,8 @@ def show_ads_txn_atp():
     if not sep_name and not cat:
         col = '类别1'
 
-    df1 = df.groupby([col]).agg({'symbol2': 'count', '市值(元)': 'sum'})
-    df1_ = df.pivot_table(index=col, columns='加减仓2', aggfunc={'symbol2': 'count', '市值(元)': 'sum'})
+    df1 = df.groupby([col]).agg({'symbol2': 'count', '市值(元)': lambda x: x.sum() / 10000})
+    df1_ = df.pivot_table(index=col, columns='加减仓3', aggfunc={'symbol2': 'count', '市值(元)': lambda x: x.sum() / 10000})
     df1_ = df1_.swaplevel(0, 1, axis=1).sort_index(axis=1)
     for col in ['加仓', '减仓', '到期']:
         if col not in df1_.columns.get_level_values(0):
@@ -61,8 +61,8 @@ def show_ads_txn_atp2():
     sql_query = f"SELECT * FROM {tb_name}  WHERE 业务日期 >= '{start_date}' AND 业务日期 <= '{end_date}'"
     sql_query += f" AND inside_trading_tag = {inter_trade}"  # todo : inside_trading
     df = query_table(sql_query, HOLDING).get_df()
-    df2 = df.groupby(['归属资管计划/自主投资基金']).agg({'symbol2': 'count', '市值(元)': 'sum'})
-    df2_ = df.pivot_table(index='归属资管计划/自主投资基金', columns='加减仓2', aggfunc={'symbol2': 'count', '市值(元)': 'sum'})
+    df2 = df.groupby(['归属资管计划/自主投资基金']).agg({'symbol2': 'count', '市值(元)': lambda x: x.sum() / 10000})
+    df2_ = df.pivot_table(index='归属资管计划/自主投资基金', columns='加减仓2', aggfunc={'symbol2': 'count', '市值(元)': lambda x: x.sum() / 10000})
     df2_ = df2_.swaplevel(0, 1, axis=1).sort_index(axis=1)
     # print(df2_.columns.get_level_values(0))
     # print(df2_)

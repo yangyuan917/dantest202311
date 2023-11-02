@@ -26,6 +26,13 @@ def show_catergory_list():
     return dict(code=200, data=res)
 
 
+@app_list.route('/province', methods=['GET', 'OPTIONS'])
+def show_province_list():
+    res = ['重庆', '江苏省', '浙江省', '湖南省', '四川省', '安徽省', '福建省', '湖北省', '江西省', '河南省',
+           '山东省', '山西省', '北京', '上海']
+    return dict(code=200, data=res)
+
+
 @app_list.route('/indus', methods=['GET', 'OPTIONS'])
 def show_industry_list():
     res = ['农林牧渔', '基础化工', '钢铁', '有色金属', '电子', '家用电器', '食品饮料', '纺织服饰', '轻工制造', '医药生物',
