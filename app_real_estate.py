@@ -59,3 +59,15 @@ def show_ads_estate_listp_chg2():
     res = res[res.down_pct.notnull()]
     return dict(code=200, data=[{'name': dt,
                                  'data': res[res.板块2 == dt][['业务日期', 'down_pct']].to_dict(orient='records')} for dt in dt_list])
+
+
+@app_real_estate.route('/onsale_price', methods=['GET', 'OPTIONS'])
+def show_ads_estate_onsale_price():
+    dt = request.args.get('dt')
+    dt_list = dt.split(',')
+    dt = "'" + "','".join(dt_list) + "'"
+    res = query_table(f"select * from ads_onsale_price where 板块2 in ({dt})", REAL_ESTATE).get_df()
+    return dict(code=200, data=[{'name': dt,
+                                 'data': res[res.板块2 == dt][['业务日期', 'unitprice1']].to_dict(orient='records')} for dt in dt_list])
+
+    # return dict(code=200, data={'xaixs': res.业务日期.to_list(), 'series': {'name': f'{dt}', 'data': res.unitprice1.to_list() for dt in dt_list}})

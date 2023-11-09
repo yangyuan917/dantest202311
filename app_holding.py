@@ -10,9 +10,10 @@ from app_list import app_list, catergory_list
 from app_txn import app_txn
 from app_macro import app_macro
 from database import HOLDING
-
+from app_separate import app_separate
 
 app_holding = Flask(__name__)
+app_holding.register_blueprint(app_separate, url_prefix='/separate')
 app_holding.register_blueprint(app_bond_price, url_prefix='/bp')
 app_holding.register_blueprint(app_real_estate, url_prefix='/estate')
 app_holding.register_blueprint(app_txn, url_prefix='/txn')
@@ -49,8 +50,12 @@ def show_asset_concentrate():
 def show_asset_concentrate_timeseries():
     catergory_string = request.args.get('catergory')
     catergory_tuple = tuple(catergory_string.split(','))
+    if len(catergory_tuple) > 1:
+        condition = f"类别1 in {catergory_tuple}"
+    else:
+        condition = f"类别1 = '{catergory_string}'"
     res = query_table(f"select 类别1, 业务日期, 团队_pct from ads_asset_concentrate where 团队='总计' and "
-                      f"类别1 in {catergory_tuple}", HOLDING).get_df()
+                      f"{condition}", HOLDING).get_df()
     res.业务日期 = res.业务日期.astype('str')
     res = {catergory: res[res.类别1 == catergory].set_index('业务日期')['团队_pct'].to_dict() for catergory in res.类别1.unique()}
     return dict(code=200, data=res)
@@ -61,9 +66,14 @@ def show_asset_indicator():
     indicator = request.args.get('indicator')
     catergory_string = request.args.get('catergory')
     catergory_tuple = tuple(catergory_string.split(','))
+    if len(catergory_tuple) > 1:
+        condition = f"类别1 in {catergory_tuple}"
+    else:
+        condition = f"类别1 = '{catergory_string}'"
+
     # decoded_catergory = urllib.parse.unquote(catergory)
     res = query_table(f"select 类别1, 业务日期, {indicator} from ads_asset_concentrate "
-                      f"where 团队='总计' and 类别1 in {catergory_tuple}", HOLDING).get_df()
+                      f"where 团队='总计' and {condition}", HOLDING).get_df()
     res.业务日期 = res.业务日期.astype('str')
     res = {catergory: res[res.类别1 == catergory].set_index('业务日期')[f'{indicator}'].to_dict() for catergory in
            res.类别1.unique()}
@@ -109,9 +119,12 @@ def show_prtindex():
 def show_prtindustry_timeseries():
     sector_string = request.args.get('sector')
     sector_tuple = tuple(sector_string.split(','))
+    if len(sector_tuple) > 1:
+        condition = f"target_col in {sector_tuple}"
+    else:
+        condition = f"target_col = '{sector_string}'"
     res = query_table(f"select 业务日期, target_col, 团队占比 from ads_stock_industry_grouped_detail "
-                      f"where `归属资管计划/自主投资基金`='全部' and "
-                      f"target_col in {sector_tuple}", HOLDING).get_df()
+                      f"where `归属资管计划/自主投资基金`='全部' and {condition}", HOLDING).get_df()
     # res = res.fillna(0)
     res.业务日期 = res.业务日期.astype('str')
     res = {sector: res[res.target_col == f'{sector}'].set_index('业务日期')['团队占比'].to_dict() for sector in
@@ -141,15 +154,18 @@ def show_fundprtindustry():
 def show_fundprtindustry_timeseries():
     sector_string = request.args.get('sector')
     sector_tuple = tuple(sector_string.split(','))
+    if len(sector_tuple) > 1:
+        condition = f"行业名称 in {sector_tuple}"
+    else:
+        condition = f"行业名称 = '{sector_string}'"
     res = query_table(f"select 业务日期, 行业名称, 团队_pct from ads_fund_industry_grouped_detail "
-                      f"where `归属资管计划/自主投资基金`='全部' and "
-                      f"行业名称 in {sector_tuple}", HOLDING).get_df()
+                      f"where `归属资管计划/自主投资基金`='全部' and {condition}", HOLDING).get_df()
     res.业务日期 = res.业务日期.astype('str')
     res = {sector: res[res.行业名称 == f'{sector}'].set_index('业务日期')['团队_pct'].to_dict() for sector in res.行业名称.unique()}
     return dict(code=200, data=res)
 
 
-# new_added
+# 城投债按地区分
 @app_holding.route('/asset_citybond', methods=['GET', 'OPTIONS'])
 def show_asset_citybond():
     start_date = request.args.get('start_date')
@@ -164,7 +180,7 @@ def show_asset_citybond():
                 data=[{'name': col, 'data': res[col].to_list(), 'xaxis': res.index.to_list()} for col in res.columns])
 
 
-# new_added
+# 城投债按地区分
 @app_holding.route('/asset_citybond1', methods=['GET', 'OPTIONS'])
 def show_asset_citybond1():
     start_date = request.args.get('start_date')
@@ -179,7 +195,7 @@ def show_asset_citybond1():
                                 'series': [{'name': col, 'data': res[col].to_list()} for col in res.columns]})
 
 
-# new_added
+# 城投债按地区分
 @app_holding.route('/asset_citybond_timeseries', methods=['GET', 'OPTIONS'])
 def show_asset_citybond_timeseries():
     dt = request.args.get('dt')
@@ -193,138 +209,6 @@ def show_asset_citybond_timeseries():
     res.业务日期 = res.业务日期.astype('str')
     res = [{'name': dt, 'data': res[res.province == dt]['团队_pct'].to_list(),
             'xaxis': res[res.province == dt].业务日期.to_list()} for dt in res.province.unique()]
-    return dict(code=200, data=res)
-
-
-# 资管计划
-# 2.1.1 大类资产配置 ads_asset_concentrate_separate
-@app_holding.route('/asset_concentrate_separate', methods=['GET', 'OPTIONS'])
-def show_asset_concentrate_separate():
-    separate_name = request.args.get('separate_name')
-    start_date = request.args.get('start_date')
-    end_date = request.args.get('end_date')
-    res = query_table(f"select 业务日期, 类别1, 团队_pct from ads_asset_concentrate_separate "
-                      f"where 业务日期 in ('{start_date}', '{end_date}') and "
-                      f"`归属资管计划/自主投资基金`='{separate_name}'", HOLDING).get_df()
-    res.业务日期 = res.业务日期.astype('str')
-    res['类别1'] = pd.Categorical(res['类别1'], categories=catergory_list, ordered=True)
-    res = res[res.类别1.notnull()].sort_values('类别1')
-    res = res.pivot(index='类别1', columns='业务日期', values='团队_pct')
-    res = res.fillna(0)
-    res = res.to_dict()
-    # res = {str(date_): res[res.业务日期 == date_].set_index('类别1')['团队_pct'].to_dict() for date_ in res.业务日期.unique()}
-    return dict(code=200, data=res)
-
-
-@app_holding.route('/asset_concentrate_timeseries_separate', methods=['GET', 'OPTIONS'])
-def show_asset_concentrate_timeseries_separate():
-    separate_name = request.args.get('separate_name')
-    catergory = request.args.get('catergory')
-    print(catergory)
-    catergory = "'" + catergory + "'"
-    res = query_table(f"select 类别1, 业务日期, 团队_pct from ads_asset_concentrate_separate "
-                      f"where `归属资管计划/自主投资基金`='{separate_name}' and "
-                      f"类别1 in ({catergory})", HOLDING).get_df()
-    res.业务日期 = res.业务日期.astype('str')
-    res = {catergory: res[res.类别1 == catergory].set_index('业务日期')['团队_pct'].to_dict() for catergory in res.类别1.unique()}
-    return dict(code=200, data=res)
-
-
-@app_holding.route('/asset_indicator_separate', methods=['GET', 'OPTIONS'])
-def show_asset_indicator_separate():
-    separate_name = request.args.get('separate_name')
-    catergory = request.args.get('catergory')
-    indicator = request.args.get('indicator')
-    catergory = "'" + catergory + "'"
-    # decoded_catergory = urllib.parse.unquote(catergory)
-    res = query_table(f"select 类别1, 业务日期, {indicator} from ads_asset_concentrate_separate "
-                      f"where `归属资管计划/自主投资基金`='{separate_name}' and "
-                      f"类别1 in ({catergory})", HOLDING).get_df()
-    res.业务日期 = res.业务日期.astype('str')
-    res = {catergory: res[res.类别1 == catergory].set_index('业务日期')[f'{indicator}'].to_dict() for catergory in
-           res.类别1.unique()}
-    # res = res.fillna(0)
-    return dict(code=200, data=res)
-
-
-# 2.2.1 股票行业分布 ads_stock_industry_grouped_detail
-@app_holding.route('/separate_prtindustry', methods=['GET', 'OPTIONS'])
-def show_separate_prtindustry():
-    separate_name = request.args.get('separate_name')
-    start_date = request.args.get('start_date')
-    end_date = request.args.get('end_date')
-    res = query_table(f"select 业务日期, target_col, 团队占比 from ads_stock_industry_grouped_detail "
-                      f"where `归属资管计划/自主投资基金`='{separate_name}' and "
-                      f"target_col not in ('not_in_index', '上证50指数', '沪深300指数', '中证1000指数', '中证800指数') and "
-                      f"业务日期 in ('{start_date}', '{end_date}')", HOLDING).get_df()
-    res.业务日期 = res.业务日期.astype('str')
-    res = res.pivot(index='target_col', columns='业务日期', values='团队占比')
-    res = res.fillna(0)
-    res = res.to_dict()
-    # res = {date_: res[res.业务日期 == date_].set_index('target_col')['团队占比'].to_dict() for date_ in res.业务日期.unique()}
-    return dict(code=200, data=res)
-
-
-# 2.2.2
-@app_holding.route('/separate_prtindex', methods=['GET', 'OPTIONS'])
-def show_separate_prtindex():
-    separate_name = request.args.get('separate_name')
-    start_date = request.args.get('start_date')
-    end_date = request.args.get('end_date')
-    res = query_table(f"select 业务日期, target_col, 团队占比 from ads_stock_industry_grouped_detail "
-                      f"where `归属资管计划/自主投资基金`='{separate_name}' and "
-                      f"target_col in ('not_in_index', '上证50指数', '沪深300指数', '中证1000指数', '中证800指数') and "
-                      f"业务日期 in ('{start_date}', '{end_date}')", HOLDING).get_df()
-    res.业务日期 = res.业务日期.astype('str')
-    res = res.pivot(index='target_col', columns='业务日期', values='团队占比')
-    res = res.fillna(0)
-    res = res.to_dict()
-    # res = {date_: res[res.业务日期 == date_].set_index('target_col')['团队占比'].to_dict() for date_ in res.业务日期.unique()}
-    return dict(code=200, data=res)
-
-
-# 2.2.3
-@app_holding.route('/separate_prtindustry_timeseries', methods=['GET', 'OPTIONS'])
-def show_separate_prtindustry_timeseries():
-    separate_name = request.args.get('separate_name')
-    sector = request.args.get('sector')
-    res = query_table(f"select 业务日期, target_col, 团队占比 from ads_stock_industry_grouped_detail "
-                      f"where `归属资管计划/自主投资基金`='{separate_name}' and "
-                      f"target_col in ('{sector}')", HOLDING).get_df()
-    # res = res.fillna(0)
-    res.业务日期 = res.业务日期.astype('str')
-    res = {sector: res[res.target_col == f'{sector}'].set_index('业务日期')['团队占比'].to_dict() for sector in
-           res.target_col.unique()}
-    return dict(code=200, data=res)
-
-
-# 2.3.1 基金行业分布 ads_fund_industry_grouped_detail
-@app_holding.route('/separate_fundprtindustry', methods=['GET', 'OPTIONS'])
-def show_separate_fundprtindustry():
-    separate_name = request.args.get('separate_name')
-    start_date = request.args.get('start_date')
-    end_date = request.args.get('end_date')
-    res = query_table(f"select 业务日期, 行业名称, 团队_pct from ads_fund_industry_grouped_detail "
-                      f"where `归属资管计划/自主投资基金`='{separate_name}' and "
-                      f"业务日期 in ('{start_date}', '{end_date}')", HOLDING).get_df()
-    res.业务日期 = res.业务日期.astype('str')
-    res = res.pivot(index='行业名称', columns='业务日期', values='团队_pct')
-    res = res.fillna(0)
-    res = res.to_dict()
-    # res = {date_: res[res.业务日期 == date_].set_index('行业名称')['团队_pct'].to_dict() for date_ in res.业务日期.unique()}
-    return dict(code=200, data=res)
-
-
-@app_holding.route('/separate_fundprtindustry_timeseries', methods=['GET', 'OPTIONS'])
-def show_separate_fundprtindustry_timeseries():
-    separate_name = request.args.get('separate_name')
-    sector = request.args.get('sector')
-    res = query_table(f"select 业务日期, 行业名称, 团队_pct from ads_fund_industry_grouped_detail "
-                      f"where `归属资管计划/自主投资基金`='{separate_name}' and "
-                      f"行业名称 in ('{sector}')", HOLDING).get_df()
-    # res = res.fillna(0)
-    res.业务日期 = res.业务日期.astype('str')
-    res = {sector: res[res.行业名称 == f'{sector}'].set_index('业务日期')['团队_pct'].to_dict() for sector in res.行业名称.unique()}
     return dict(code=200, data=res)
 
 

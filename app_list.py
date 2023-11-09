@@ -63,5 +63,5 @@ def show_city_register_list():
 @app_list.route('/city_price', methods=['GET', 'OPTIONS'])
 def show_city_price_list():
     res = query_table("select distinct 板块2 from ads_estate_listp_chg where 业务日期 = '2023-10-22'", REAL_ESTATE).get_df()
-    return dict(code=200, data=res['板块2'].to_list())
+    return dict(code=200, data=res[res['板块2'] != '']['板块2'].to_list())
 
