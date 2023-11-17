@@ -129,22 +129,22 @@ def show_ads_txn_stock_prt():
     cat = request.args.get('cat', default='')
     param1 = request.args.get('param1', default='')
     param4 = request.args.get('param4', default=False)  # todo 是否区分买卖
-    tb_name = 'ads_txn_stock_industry_grouped'
+    tb_name = 'ads_txn_fund_industry_grouped'
 
     sql_query = f"SELECT * FROM {tb_name}  WHERE 业务日期 >= '{start_date}' AND 业务日期 <= '{end_date}' AND `归属资管计划/自主投资基金` != '总计'"
 
     if sep_name:
         sql_query += f" AND `归属资管计划/自主投资基金` = '{sep_name}'"
     if cat:
-        sql_query += f" AND target_col = '{cat}'"
+        sql_query += f" AND 行业名称 = '{cat}'"
 
     df = query_table(sql_query, HOLDING).get_df()
     if param1 == '0' or sep_name:
-        col = 'target_col'
+        col = '行业名称'
         target_col = '归属资管计划/自主投资基金'
     if param1 == '1' or cat:
         col = '归属资管计划/自主投资基金'
-        target_col = 'target_col'
+        target_col = '行业名称'
 
     df1 = df.groupby([col]).agg({target_col: 'count', '市值(万)': lambda x: x.sum()})
     df1_ = df.pivot_table(index=col, columns='加减仓3', aggfunc={target_col: 'count', '市值(万)': lambda x: x.sum()})
