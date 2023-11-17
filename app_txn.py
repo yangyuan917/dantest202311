@@ -116,7 +116,7 @@ def show_ads_txn_stock_prt():
     res.columns = df1.columns.tolist() + ['加仓_' + col for col in df1_['加仓'].columns] + \
                   ['减仓_' + col for col in df1_['减仓'].columns] + \
                   ['到期_' + col for col in df1_['到期'].columns]
-    # res.index.name = '归属资管计划'
+    res.index.name = '归属资管计划'
     # res = pd.concat([pd.concat([df1, df2]), pd.concat([df1_, df2_])], axis=1)
     return dict(code=200, data=res.fillna(0.0).reset_index().to_dict(orient='records'))
 
