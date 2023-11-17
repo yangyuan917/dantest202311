@@ -4,7 +4,7 @@ from flask import Flask, request
 from flask_cors import CORS
 # from flask_socketio import SocketIO
 from fin_store.sql_adapter import query_table
-from app_price import app_bond_price
+from app_price import app_bond_price, app_market_price
 from app_real_estate import app_real_estate
 from app_list import app_list, catergory_list
 from app_txn import app_txn
@@ -15,6 +15,7 @@ from app_separate import app_separate
 app_holding = Flask(__name__)
 app_holding.register_blueprint(app_separate, url_prefix='/separate')
 app_holding.register_blueprint(app_bond_price, url_prefix='/bp')
+app_holding.register_blueprint(app_market_price, url_prefix='/mp')
 app_holding.register_blueprint(app_real_estate, url_prefix='/estate')
 app_holding.register_blueprint(app_txn, url_prefix='/txn')
 app_holding.register_blueprint(app_list, url_prefix='/list')
@@ -253,7 +254,6 @@ def show_ads_transaction_bondfund():
     #         weights=np.ma.masked_array(res.loc[x.index, '市值(元)'], mask=res.loc[x.index, '加减仓3'] == '到期')
     #         if res.loc[x.index, '市值(元)'].sum() != 0 else 0 for col in ['duration', 'fund_duration'])}})
     res.业务日期 = res.业务日期.astype('str')
-    print(res)
     cols = ['市值(元)', indicator] if indicator else ['市值(元)']
     if separate_buy_sell:
         res_data = {col: {t: res[res.加减仓3 == t].set_index('业务日期')[col].to_dict() for t in ['加仓', '减仓']} for col in cols}

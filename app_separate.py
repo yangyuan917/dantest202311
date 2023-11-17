@@ -10,6 +10,24 @@ app_separate = Blueprint('separate', __name__)
 
 
 # 2.1.1 大类资产配置 ads_asset_concentrate_separate
+# 置顶行：总规模&大类资产配置
+@app_separate.route('/total_asset', methods=['GET', 'OPTIONS'])
+def show_asset_total():
+    separate_name = request.args.get('separate_name')
+    res = query_table(f"select 业务日期, `市值(元)` from ads_seperate_grouped where `归属资管计划/自主投资基金` = '{separate_name}'",
+                      HOLDING).get_df()
+    res.业务日期 = res.业务日期.astype('str')
+    return dict(code=200, data=res.to_dict())
+
+
+@app_separate.route('/total_asset1', methods=['GET', 'OPTIONS'])
+def show_asset_total1():
+    separate_name = request.args.get('separate_name')
+    res = query_table(f"select 业务日期, `市值(元)` from ads_seperate_grouped where `归属资管计划/自主投资基金` = '{separate_name}'",
+                      HOLDING).get_df()
+    return dict(code=200, data=res.values.tolist())
+
+
 @app_separate.route('/asset_concentrate', methods=['GET', 'OPTIONS'])
 def show_asset_concentrate_separate():
     separate_name = request.args.get('separate_name')

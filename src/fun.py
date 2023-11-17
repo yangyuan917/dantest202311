@@ -1,3 +1,5 @@
+import pandas as pd
+
 import fin_store.sql_adapter as sa
 from database import HOLDING
 
@@ -12,11 +14,15 @@ def cal_price_product(start_date, end_date):
 
 
 def cal_price_asset(cat, start_date, end_date):
-    target_df = sa.query_table()
-    value_col = '' if '' else ''
-    dw_tb = '' if '' else ''
-    first_date, last_date = target_df.业务日期.min(), target_df.业务日期.max()
-    price = sa.query_table(f"select * from {dw_tb}", HOLDING).get_df()
+    target_df = sa.query_table(f"select 业务日期, symbol2, `市值(元)_投组` from dwd_asset_holding_s "
+                               f"where 类别1='{cat}' and 业务日期 in ('{start_date}', '{end_date}')", HOLDING).get_df()
+
+    value_col = 'close' if cat == '股票' else \
+        'nav_adj' if cat in ('股票型基金', '混合型基金', '债券型基金') else 'net'
+    dw_tb = 'dw_stock_price' if cat == '股票' else \
+        'dw_fund_price' if cat in ('股票型基金', '混合型基金', '债券型基金') else 'dw_bond_price'
+    price = sa.query_table(f"select * from {dw_tb} where trade_date in ('{start_date}', '{end_date}')", HOLDING).get_df()
+    first_date, last_date = pd.to_datetime(start_date), pd.to_datetime(end_date)
 
     # 分析stock.symbol既在首日，又在末日的
     price = price[
@@ -26,6 +32,8 @@ def cal_price_asset(cat, start_date, end_date):
 
     res_tmp = price[price.trade_date == last_date]. \
         merge(price[price.trade_date == first_date][['symbol2', value_col]], on='symbol2',
-              suffixes=('_last', '_first'))
+              suffixes=('_last', '_first')).\
+        merge(target_df[target_df.业务日期 == last_date])
     res_tmp['chg'] = res_tmp[value_col + '_last'] / res_tmp[value_col + '_first'] * 100 - 100
+
     return res_tmp

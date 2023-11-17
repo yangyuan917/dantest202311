@@ -30,10 +30,30 @@ def show_ads_estate_register():
 
 @app_real_estate.route('/onsale', methods=['GET', 'OPTIONS'])
 def show_ads_estate_onsalecount():
-    dt = request.args.get('dt')
-    # dt = "'" + "','".join(dt.split(',')) + "'"
-    res = query_table(f"select * from ods_bk_onsalecount_daily where 地区 = '{dt}'", REAL_ESTATE).get_df()
-    return dict(code=200, data={'xaixs': res.业务日期.to_list(), 'series': {'name': f'{dt}', 'data': res.在售套数.to_list()}})
+    dt_string = request.args.get('dt')
+    dt_tuple = tuple(dt_string.split(','))
+    if len(dt_tuple) > 1:
+        condition = f"地区 in {dt_tuple}"
+    else:
+        condition = f"地区 = '{dt_string}'"
+    res = query_table(f"select * from ods_bk_onsalecount_daily where {condition}", REAL_ESTATE).get_df()
+    res.业务日期 = res.业务日期.astype('str')
+    res = [{dt: res[res.地区 == f'{dt}'][['业务日期', '在售套数']].values.tolist()} for dt in res.地区.unique()]
+    return dict(code=200, data=res)
+
+
+@app_real_estate.route('/onsaletest', methods=['GET', 'OPTIONS'])
+def show_ads_estate_onsalecount1():
+    dt_string = request.args.get('dt')
+    dt_tuple = tuple(dt_string.split(','))
+    if len(dt_tuple) > 1:
+        condition = f"地区 in {dt_tuple}"
+    else:
+        condition = f"地区 = '{dt_string}'"
+    res = query_table(f"select * from ods_bk_onsalecount_daily where {condition}", REAL_ESTATE).get_df()
+    res.业务日期 = res.业务日期.astype('str')
+    res = {dt: res[res.地区 == f'{dt}'][['业务日期', '在售套数']].values.tolist() for dt in res.地区.unique()}
+    return dict(code=200, data=res)
 
 
 @app_real_estate.route('/listp', methods=['GET', 'OPTIONS'])

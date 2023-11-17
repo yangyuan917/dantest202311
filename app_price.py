@@ -2,6 +2,8 @@ from flask import Blueprint, request
 from fin_store.sql_adapter import query_table
 from database import HOLDING
 from src.fun import cal_price_asset, cal_price_product
+import pandas as pd
+import numpy as np
 
 app_bond_price = Blueprint('bp', __name__)
 app_market_price = Blueprint('mp', __name__)
@@ -27,14 +29,14 @@ def show_ads_asset_price():
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
     r = cal_price_asset(cat, start_date, end_date)
-    import pandas as pd
-    import numpy as np
     bins = [-np.inf, -20, -15] + list(range(-10, 11)) + [15, 20, np.inf]
     r['bin'] = pd.cut(r.chg, bins)
+
     res = r.groupby('bin', as_index=False).agg({'symbol2': 'count', '市值(元)_投组': 'sum'})
     total_market_value = res['市值(元)_投组'].sum()
     res['市值占比'] = res['市值(元)_投组'] / total_market_value
-    return
+    res['bin'] = res['bin'].astype(str)
+    return dict(code=200, data=res[['bin', '市值占比']].to_dict())
 
 
 @app_market_price.route('/prod_price', methods=['GET', 'OPTIONS'])
@@ -49,4 +51,4 @@ def show_ads_prod_price():
     res = r.groupby('bin', as_index=False).agg({'投组单元编号': 'nunique', '总资产市值(元)': 'sum'})
     total_market_value = res['总资产市值(元)'].sum()
     res['市值占比'] = res['总资产市值(元)'] / total_market_value
-    return
+    return res
