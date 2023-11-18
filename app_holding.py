@@ -256,7 +256,9 @@ def show_ads_transaction_bondfund():
     res.业务日期 = res.业务日期.astype('str')
     cols = ['市值(元)', indicator] if indicator else ['市值(元)']
     if separate_buy_sell:
-        res_data = {col: {t: res[res.加减仓3 == t].set_index('业务日期')[col].to_dict() for t in ['加仓', '减仓']} for col in cols}
+        # res_data = {col: {t: res[res.加减仓3 == t].set_index('业务日期')[col].to_dict() for t in ['加仓', '减仓']} for col in cols}
+        res_data = [{'data': res[res.加减仓3 == t][['业务日期', col]].values.tolist(), 'name': col, 'tag': t}
+                               for t in ['加仓', '减仓'] for col in cols]
     else:
         res_data = {col: res.set_index('业务日期')[col].to_dict() for col in cols}
     # res = {col: res[['业务日期', col]].values.tolist() for col in ['市值(元)', f'{indicator}']}

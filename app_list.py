@@ -56,7 +56,7 @@ def show_city_onsale_list():
 
 @app_list.route('/city_register', methods=['GET', 'OPTIONS'])
 def show_city_register_list():
-    res = ['北京', '深圳', '成都']
+    res = ['北京', '深圳', '成都', '上海', '苏州']
     return dict(code=200, data=res)
 
 

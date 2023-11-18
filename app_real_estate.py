@@ -22,6 +22,13 @@ def show_ads_estate_register():
             tmp['业务日期'] = pd.to_datetime(tmp['业务日期'], format='%Y年%m月%d日')
         if dt == '成都':
             tmp = res_dt[res_dt.指标.str.contains('一手房中心城区|二手房中心城区')][['业务日期', '住宅套数', '指标']]
+        if dt == '上海':
+            tmp = res_dt[['业务日期', '套数']]
+            tmp['指标'] = ''
+        # if dt == '武汉':
+        #     tmp = res_dt[res_dt.指标.str.contains('一手房中心城区|二手房中心城区')][['业务日期', '住宅套数', '指标']]
+        if dt == '苏州':
+            tmp = res_dt[res_dt.指标.str.contains('市区合计') & res_dt.类型.str.contains('住宅')][['业务日期', '套数', '指标']]
         res += [{'name': f'{dt}:{ind}',
                  'data': tmp[tmp.指标 == ind].drop(columns='指标').values.tolist()}
                 for ind in tmp.指标.unique()]
