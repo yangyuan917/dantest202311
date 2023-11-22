@@ -46,9 +46,10 @@ def show_ads_prod_price():
     r = cal_price_product(start_date, end_date)
     import pandas as pd
     import numpy as np
-    bins = [-np.inf, -2] + list(range(-1, 1.1, 0.1)) + [2, np.inf]
+    bins = [-np.inf, -0.2] + list(np.arange(-0.1, 0.11, 0.01)) + [0.2, np.inf]
     r['bin'] = pd.cut(r.chg, bins)
-    res = r.groupby('bin', as_index=False).agg({'投组单元编号': 'nunique', '总资产市值(元)': 'sum'})
-    total_market_value = res['总资产市值(元)'].sum()
-    res['市值占比'] = res['总资产市值(元)'] / total_market_value
-    return res
+    res = r.groupby('bin', as_index=False).agg({'投组单元编号': 'nunique', '总资产净值(元)': 'sum'})
+    total_market_value = res['总资产净值(元)'].sum()
+    res['市值占比'] = res['总资产净值(元)'] / total_market_value
+    res['bin'] = res['bin'].astype(str)
+    return dict(code=200, data=res[['bin', '市值占比']].to_dict())

@@ -5,6 +5,7 @@ import pandas as pd
 from database import REAL_ESTATE
 
 app_real_estate = Blueprint('estate', __name__)
+app_real_estate_detail = Blueprint('estate_detail', __name__)
 
 
 @app_real_estate.route('/register', methods=['GET', 'OPTIONS'])
@@ -98,3 +99,62 @@ def show_ads_estate_onsale_price():
                                  'data': res[res.板块2 == dt][['业务日期', 'unitprice1']].to_dict(orient='records')} for dt in dt_list])
 
     # return dict(code=200, data={'xaixs': res.业务日期.to_list(), 'series': {'name': f'{dt}', 'data': res.unitprice1.to_list() for dt in dt_list}})
+
+
+@app_real_estate_detail.route('/chg', methods=['GET', 'OPTIONS'])
+def show_ads_estate_detail():
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+
+    city = request.args.get('city', default='')
+    district1 = request.args.get('district1', default='')
+    district2 = request.args.get('district2', default='')
+    lp_name = request.args.get('lp_name', default='')
+
+    floor = request.args.get('floor', default='')
+    built_year_start = request.args.get('built_year_start', default='')
+    built_year_end = request.args.get('built_year_end', default='')
+    num_of_room = request.args.get('num_of_room', default='')
+    area_start = request.args.get('area_start', default='')
+    area_end = request.args.get('area_end', default='')
+    orientation = request.args.get('orientation', default='')
+
+    # conditions = ["a.业务日期 >= %s", "a.业务日期 <= %s"]
+    # params = [start_date, end_date]
+    #
+    # if city:
+    #     conditions.append("b.city = %s")
+    #     params.append(city)
+    # sql_query = "select * from ods_bk_hs_price_sample a left join ods_bk_lp_list b on a.name = b.title where " + " AND ".join(conditions)
+    # res = query_table("SELECT * FROM ods_bk_hs_price_sample WHERE 业务日期 >= :start_date AND 业务日期 <= :end_date", REAL_ESTATE, start_date = start_date, end_date= end_date).get_df()
+    # res = query_table("SELECT * FROM ods_bk_hs_price_sample WHERE 业务日期 >= {} AND 业务日期 <= {}", REAL_ESTATE, [start_date, end_date]).get_df()
+
+    sql_query = f"select * from ods_bk_hs_price_sample a left join ods_bk_lp_list b " \
+                f"on a.name = b.title where a.业务日期 >= '{start_date}' and a.业务日期 <= '{end_date}'"
+
+    if city != '':
+        sql_query += f" AND b.city = '{city}'"
+    if district1 != '':
+        sql_query += f" AND b.positionInfo1 = '{district1}'"
+    if district2 != '':
+        sql_query += f" AND b.positionInfo2 = '{district2}'"
+    if lp_name != '':
+        sql_query += f" AND a.name = '{lp_name}'"
+
+    if floor != '':
+        sql_query += f" AND a.houseIcon like '%{floor}%'"
+    if built_year_start != '':
+        sql_query += f" AND CAST(REGEXP_SUBSTR(a.houseIcon, '([0-9]+)年') AS UNSIGNED) >= {built_year_start}"
+        # sql_query += f" AND CAST(REGEXP_SUBSTR(a.houseIcon, '([0-9]{{4}})年') AS UNSIGNED) >= {built_year_start}" todo:为什么不对
+    if built_year_end != '':
+        sql_query += f" AND CAST(REGEXP_SUBSTR(a.houseIcon, '([0-9]+)年') AS UNSIGNED) <= {built_year_end}"
+    if num_of_room != '':
+        sql_query += f" AND CAST(REGEXP_SUBSTR(a.houseIcon, '([0-9])室') AS UNSIGNED) = {num_of_room}"
+    if area_start != '':
+        sql_query += f" AND CAST(REGEXP_SUBSTR(a.houseIcon, '([0-9]+)平米') AS UNSIGNED) >= {area_start}"
+    if area_end != '':
+        sql_query += f" AND CAST(REGEXP_SUBSTR(a.houseIcon, '([0-9]+)平米') AS UNSIGNED) >= {area_end}"
+    if orientation != '':
+        sql_query += f" AND a.houseIcon = {orientation}"
+    res = query_table(sql_query, REAL_ESTATE).get_df()
+    return dict(code=200, data=res.to_dict())

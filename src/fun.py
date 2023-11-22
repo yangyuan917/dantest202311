@@ -5,22 +5,28 @@ from database import HOLDING
 
 
 def cal_price_product(start_date, end_date):
-    price = sa.query_table(f"select 业务日期, `投组代码/产品代码`, 投组单元编号, `单位净值(元)` from product_ledger", HOLDING).get_df()
+    price = sa.query_table(f"select 业务日期, `产品代码`, 投组单元编号, `单位净值(元)`, `总资产净值(元)` from dws_product_ledger", HOLDING).get_df()
     res_tmp = price[price.业务日期 == end_date]. \
-        merge(price[price.业务日期 == start_date][['投组代码/产品代码', '单位净值(元)']], on='投组代码/产品代码',
+        merge(price[price.业务日期 == start_date][['产品代码', '单位净值(元)']], on='产品代码',
               suffixes=('_last', '_first'))
     res_tmp['chg'] = res_tmp['单位净值(元)' + '_last'] / res_tmp['单位净值(元)' + '_first'] * 100 - 100
     return res_tmp
 
 
 def cal_price_asset(cat, start_date, end_date):
-    target_df = sa.query_table(f"select 业务日期, symbol2, `市值(元)_投组` from dwd_asset_holding_s "
-                               f"where 类别1='{cat}' and 业务日期 in ('{start_date}', '{end_date}')", HOLDING).get_df()
+    print(cat)
+    cat_tuple = tuple(cat.split(','))
+    if len(cat_tuple) > 1:
+        condition = f"类别1 in {cat_tuple}"
+    else:
+        condition = f"类别1 = '{cat}'"
+    target_df = sa.query_table(f"select 业务日期, symbol2, `市值(元)_投组` from dwd_asset_holding "
+                               f"where 业务日期 in ('{start_date}', '{end_date}') and {condition}", HOLDING).get_df()
 
     value_col = 'close' if cat == '股票' else \
-        'nav_adj' if cat in ('股票型基金', '混合型基金', '债券型基金') else 'net'
+        'nav_adj' if '基金' in cat else 'net'
     dw_tb = 'dw_stock_price' if cat == '股票' else \
-        'dw_fund_price' if cat in ('股票型基金', '混合型基金', '债券型基金') else 'dw_bond_price'
+        'dw_fund_price' if '基金' in cat else 'dw_bond_price'
     price = sa.query_table(f"select * from {dw_tb} where trade_date in ('{start_date}', '{end_date}')", HOLDING).get_df()
     first_date, last_date = pd.to_datetime(start_date), pd.to_datetime(end_date)
 
